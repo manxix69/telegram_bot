@@ -9,26 +9,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pro.sky.telegrambot.services.NotificationTaskService;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class TelegramBotUpdatesListener implements UpdatesListener {
-
-    private Logger logger = LoggerFactory.getLogger(TelegramBotUpdatesListener.class);
-
     @Autowired
     private TelegramBot telegramBot;
+    private final NotificationTaskService notificationTaskService;
+    private Logger logger = LoggerFactory.getLogger(TelegramBotUpdatesListener.class);
 
-    private final String HELLO_TEXT = "Hy my friend! It`s bot for tests!";
-    private final String STATEMENT_START = "/start";
-
-    private final Pattern PATTERN_STATEMENT_START = Pattern.compile(STATEMENT_START);
-
-    private Matcher matcher;
+    public TelegramBotUpdatesListener(NotificationTaskService notificationTaskService) {
+        this.notificationTaskService = notificationTaskService;
+    }
 
     @PostConstruct
     public void init() {
@@ -37,23 +32,19 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
 
     @Override
     public int process(List<Update> updates) {
-
         updates.forEach(update -> {
             logger.info("Processing update: {}", update);
             // Process your updates here
-            matcher = PATTERN_STATEMENT_START.matcher(update.message().text());
-            if (matcher.matches()) {
-                SendMessage message = new SendMessage(update.message().chat().id(), HELLO_TEXT);
-                SendResponse response = telegramBot.execute(message);
-                logger.info("Processing response: {}", response);
-            }
-//            update.message().text();    // Текст сообщения
-//            update.message().chat().id(); //идентификатор чата, в который нужно отправить сообщение
-
-//            SendMessage message = new SendMessage(update.message().chat().id(), messageText);
-//            SendResponse response = telegramBot.execute(message);
+            final String textResponse;
+            textResponse = notificationTaskService.processMassage(update.message().chat().id(), update.message().text());
+            sendResponse(update.message().chat().id(), textResponse);
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
 
+    private void sendResponse(long chatId, String responseText){
+        SendMessage sendMessage = new SendMessage(chatId, responseText);
+        SendResponse response = telegramBot.execute(sendMessage);
+        logger.info("Response send: {} ", response);
+    }
 }

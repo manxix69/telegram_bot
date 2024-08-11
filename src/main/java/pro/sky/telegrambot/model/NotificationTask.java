@@ -1,9 +1,6 @@
 package pro.sky.telegrambot.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -11,8 +8,11 @@ import java.util.Objects;
 @Table(name = "z_notification_task")
 public class NotificationTask {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="z_notification_task_id_seq")
+    @SequenceGenerator(name="z_notification_task_id_seq", sequenceName="z_notification_task_id_seq", allocationSize=1)
+    @Column(name = "ID")
     private Long id;
+
     private String chatId;
     private String responseText;
     private LocalDateTime dateCreate;
@@ -23,8 +23,8 @@ public class NotificationTask {
     private NotificationTask() {
     }
 
-    public NotificationTask(String chatId, LocalDateTime dateStartSend, String responseText) {
-        this.chatId = chatId;
+    public NotificationTask(Long chatId, LocalDateTime dateStartSend, String responseText) {
+        this.chatId = Long.toString(chatId);
         this.dateStartSend = dateStartSend;
         this.responseText = responseText;
         this.dateCreate = LocalDateTime.now();
